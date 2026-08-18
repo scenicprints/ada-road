@@ -307,3 +307,62 @@ nav button:focus-visible{outline:2px solid var(--marigold);outline-offset:-3px;b
   *{animation:none !important;transition:none !important;}
   .o-tongue{transform:scaleY(0);}
 }
+
+/* ═══ EL PARQUE ═══════════════════════════════════════════════════════
+   The park fills the whole scrolling area, so that screen must not
+   scroll — the canvas handles panning itself. */
+body[data-tab="parque"] main{padding:0;overflow:hidden;}
+.parkwrap{position:relative;width:100%;height:100%;overflow:hidden;background:#BFD9C2;}
+canvas.park{position:absolute;inset:0;width:100%;height:100%;display:block;
+  touch-action:none;cursor:grab;}
+canvas.park.dragging{cursor:grabbing;}
+
+.pctrls{position:absolute;right:12px;bottom:92px;display:flex;flex-direction:column;gap:8px;z-index:2;}
+.pctrls button{
+  width:44px;height:44px;border-radius:14px;cursor:pointer;
+  background:rgba(255,250,240,.92);border:1px solid rgba(59,42,29,.14);
+  color:#4A382A;font:inherit;font-size:17px;font-weight:700;
+  box-shadow:0 2px 6px rgba(20,30,20,.22);display:grid;place-items:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.pctrls button:active{transform:translateY(1px);}
+/* Scoped to .pctrls, NOT to any svg in the park — a loose selector once
+   absolutely positioned every button icon at 0,0 in a heap. */
+.pctrls button svg{width:20px;height:20px;fill:none;stroke:currentColor;
+  stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+
+.phud[hidden]{display:none;}
+.phud{position:absolute;left:0;right:0;bottom:0;padding:16px 16px 18px;z-index:1;
+  background:linear-gradient(to top,rgba(248,238,222,.97) 60%,rgba(248,238,222,0));
+  pointer-events:none;}
+.phud b{display:block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:#8C7A62;font-weight:700;margin-bottom:2px;}
+.phud span{font-size:18px;font-weight:700;color:#3B2A1D;line-height:1.25;display:block;max-width:270px;}
+
+.pcard[hidden]{display:none;}
+.pcard{position:absolute;left:14px;right:14px;bottom:16px;z-index:3;
+  background:rgba(255,250,240,.97);border-radius:18px;padding:16px 18px 14px;
+  box-shadow:0 8px 28px rgba(20,30,20,.28);color:#3B2A1D;
+  display:flex;flex-direction:column;gap:5px;}
+.pcard b{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#8C7A62;font-weight:700;}
+.pcard h3{margin:0;font-family:var(--display);font-size:19px;line-height:1.25;font-weight:700;padding-right:28px;}
+.pcard p{margin:2px 0 0;font-size:14px;color:#5C4A38;line-height:1.5;}
+.pcard i{font-style:normal;font-size:12px;color:#8C7A62;margin-top:4px;}
+.pcard .x{position:absolute;top:8px;right:8px;width:34px;height:34px;border:none;
+  background:none;font-size:22px;color:#8C7A62;cursor:pointer;border-radius:10px;}
+
+/* ═══ TICK BOXES ON EL CAMINO ═════════════════════════════════════════
+   She does not do the steps in the order the list happens to be in, so
+   every one of them is tickable whenever she actually did it. */
+.tick{
+  flex:none;width:22px;height:22px;margin-top:1px;border-radius:7px;
+  border:1.6px solid var(--muted);background:#fff;cursor:pointer;padding:0;
+  display:grid;place-items:center;position:relative;
+  -webkit-tap-highlight-color:transparent;
+}
+.tick::after{content:'';position:absolute;top:50%;left:50%;width:44px;height:44px;transform:translate(-50%,-50%);}
+.tick[aria-pressed="true"]{background:var(--jade);border-color:var(--jade);}
+.tick svg{width:13px;height:13px;fill:none;stroke:#fff;stroke-width:2.4;
+  stroke-linecap:round;stroke-linejoin:round;}
+.tick:focus-visible{outline:2px solid var(--marigold);outline-offset:2px;}
+ol.road li[data-done="1"] .n{color:var(--jade);}
