@@ -75,7 +75,9 @@ jobs:
           set -e
           cd docs
           fail=0
-          for f in $(grep -oP "(?<=')\./[^']+(?=')" sw.js | sed "s|^\./||" | grep -v '^$'); do
+          # Only the precache list, not the whole file — a quoted path
+          # mentioned in a comment once failed a deploy for no reason.
+          for f in $(sed -n '/^const FILES/,/^];/p' sw.js | grep -oP "(?<=')\./[^']+(?=')" | sed "s|^\./||" | grep -v '^$'); do
             [ -e "$f" ] || { echo "::error::sw.js caches a missing file: $f"; fail=1; }
           done
           for f in js/*.js; do

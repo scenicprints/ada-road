@@ -83,7 +83,7 @@ self.addEventListener('fetch', (e) => {
   // Our own JavaScript: network first, always.
   //
   // index.html carries ?v= on the files it names, but an ES module import
-  // inside app.js ("import './data.js'") carries nothing. Those requests
+  // inside app.js (import "./data.js") carries nothing. Those requests
   // matched the cache exactly and were answered with the previous build —
   // so a new app.js ran against an old data.js and the app showed 21 steps
   // when it shipped 32. Cache-busting in the HTML cannot reach them; only
