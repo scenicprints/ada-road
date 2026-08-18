@@ -76,17 +76,25 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Everything else: cached copy first — the URLs carry a version, so a
-  // new build asks for new URLs anyway.
+  // Everything else.
+  //
+  // The match must include the query string. Matching with ignoreSearch
+  // meant app.js?v=1.0.3 was answered with the copy cached for v=1.0.2 —
+  // which defeats the entire point of putting a version in the URL, and
+  // shipped a build where the new code never actually reached the phone.
+  //
+  // So: exact match first, then network (and cache what comes back), and
+  // only if the network is gone do we fall back to any version we have.
   e.respondWith((async () => {
-    const hit = await caches.match(e.request, { ignoreSearch: true });
-    if (hit) return hit;
+    const exact = await caches.match(e.request);
+    if (exact) return exact;
     try {
       const fresh = await fetch(e.request);
       if (fresh.ok) (await caches.open(SHELL)).put(e.request, fresh.clone());
       return fresh;
     } catch (err) {
-      return Response.error();
+      const stale = await caches.match(e.request, { ignoreSearch: true });
+      return stale || Response.error();
     }
   })());
 });
