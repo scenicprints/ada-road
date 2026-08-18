@@ -1,0 +1,96 @@
+name: Deploy
+
+# Push to main and both phones have it.
+#
+# One version number is worked out here and stamped into every file that
+# needs it — version.json, the service worker, and the ?v= on the asset
+# URLs — so a cache bump can never be half-applied. Nothing is ever
+# versioned by hand.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'VERSION'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Numbers only. The version ends up inside asset URLs, and a "+" in a
+      # query string decodes as a space — which silently breaks the app's
+      # "am I up to date?" check and leaves an update banner up forever.
+      - name: Work out the version
+        id: v
+        run: |
+          BASE=$(tr -d '[:space:]' < VERSION)
+          echo "version=${BASE}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "built=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: The version must be safe to put in a URL
+        env: { V: "${{ steps.v.outputs.version }}" }
+        run: |
+          printf '%s' "$V" | grep -qE '^[0-9]+(\.[0-9]+)+$' \
+            || { echo "::error::version '$V' is not numeric-only"; exit 1; }
+          echo "version $V is URL-safe"
+
+      - name: Stamp the version everywhere
+        env:
+          V: ${{ steps.v.outputs.version }}
+          B: ${{ steps.v.outputs.built }}
+          S: ${{ steps.v.outputs.sha }}
+        run: |
+          set -e
+          sed -i "s/__VERSION__/${V}/g; s/__BUILT__/${B}/g; s/__COMMIT__/${S}/g" docs/version.json
+          sed -i "s/__VERSION__/${V}/g" docs/sw.js
+          sed -i "s/?v=DEV/?v=${V}/g" docs/index.html
+          echo "--- version.json"; cat docs/version.json
+          if grep -rn "__VERSION__" docs/; then echo "::error::a placeholder survived"; exit 1; fi
+          if grep -n "?v=DEV" docs/index.html; then echo "::error::an unstamped asset URL survived"; exit 1; fi
+
+      # A file the service worker promises to cache but which doesn't exist
+      # means the app half-works offline, which is worse than not at all.
+      - name: Check nothing references a missing file
+        run: |
+          set -e
+          cd docs
+          fail=0
+          for f in $(grep -oP "(?<=')\./[^']+(?=')" sw.js | sed "s|^\./||" | grep -v '^$'); do
+            [ -e "$f" ] || { echo "::error::sw.js caches a missing file: $f"; fail=1; }
+          done
+          for f in js/*.js; do
+            for imp in $(grep -oP "(?<=from ')\./[^']+(?=')" "$f" || true); do
+              [ -e "js/${imp#./}" ] || { echo "::error::$f imports missing ${imp}"; fail=1; }
+            done
+          done
+          exit $fail
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

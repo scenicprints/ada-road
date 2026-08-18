@@ -1,0 +1,301 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   ADA'S ROAD
+
+   Warm means somewhere real: adobe ground, marigold for the one thing to
+   do, jade for what's done, cocoa instead of grey or black. A neutral
+   with a warm tint is what read cold the first time round.
+
+   Phone rules that are not style choices:
+     · every input is 16px, or iOS Safari zooms the page on focus
+     · 44px touch targets
+     · safe-area padding for the notch and the home bar
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@import url('fonts.css');
+
+:root{
+  --ground:#F8E7CE;
+  --card:#FFF6E7;
+  --card-2:#F5E2C6;
+  --ink:#3B2A1D;
+  --ink-2:#7A6250;
+  --muted:#A08D77;
+  --line:#E7D2B0;
+  --marigold:#D97B1E;
+  --jade:#2F8B71;
+  --clay:#C9563C;
+  --stage:#F2D9B4;
+  --shadow:rgba(59,42,29,.13);
+  --display:'Fraunces',Georgia,'Times New Roman',serif;
+}
+
+*,*::before,*::after{box-sizing:border-box;}
+
+html{-webkit-text-size-adjust:100%;}
+
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ── update banner ── */
+/* This MUST come first. `display:flex` below beats the browser's own rule
+   for [hidden], so without it the banner is permanently on screen with no
+   text in it. */
+.banner[hidden]{display:none;}
+.banner{
+  flex:none;display:flex;align-items:center;gap:10px;
+  padding:calc(env(safe-area-inset-top) + 9px) 14px 9px;
+  background:var(--marigold);color:#fff;
+}
+.banner p{margin:0;flex:1;font-size:13.5px;font-weight:600;}
+.banner button{
+  font:inherit;font-size:13px;font-weight:700;cursor:pointer;
+  background:rgba(255,255,255,.22);color:#fff;border:none;
+  padding:8px 13px;border-radius:99px;min-height:38px;
+}
+
+/* ── top bar (just the gear) ── */
+.top{
+  flex:none;display:flex;justify-content:flex-end;
+  padding:calc(env(safe-area-inset-top) + 6px) 8px 0;
+}
+.banner:not([hidden]) ~ .top{padding-top:6px;}
+#gear{
+  width:44px;height:44px;display:grid;place-items:center;
+  background:none;border:none;cursor:pointer;color:var(--muted);
+  -webkit-tap-highlight-color:transparent;
+}
+#gear svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;}
+#gear[aria-selected="true"]{color:var(--marigold);}
+#gear:focus-visible{outline:2px solid var(--marigold);outline-offset:-4px;border-radius:12px;}
+
+/* ── scrolling area ── */
+main{
+  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:0 18px 24px;
+}
+
+h1{font-family:var(--display);font-weight:700;font-size:29px;
+  letter-spacing:-.01em;margin:6px 0 2px;}
+h3{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 3px;}
+.sub{margin:0 0 14px;font-size:13.5px;color:var(--ink-2);}
+.hint{margin:0;font-size:12.5px;color:var(--muted);}
+.label{font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--muted);font-weight:700;margin:22px 0 9px;}
+
+/* ── Ottis ── */
+.perch{
+  background:var(--stage);border-radius:0 0 26px 26px;
+  margin:0 -18px;padding:2px 18px 15px;
+  display:flex;flex-direction:column;align-items:center;
+}
+.perch .ottis{width:170px;height:auto;display:block;overflow:visible;}
+.bubble{
+  background:var(--card);border-radius:16px;padding:11px 16px;margin:-8px 0 0;
+  font-family:var(--display);font-size:17.5px;font-weight:500;
+  text-align:center;max-width:300px;box-shadow:0 2px 0 var(--shadow);
+  position:relative;
+}
+.bubble::before{
+  content:'';position:absolute;top:-7px;left:50%;transform:translateX(-50%);
+  border-left:9px solid transparent;border-right:9px solid transparent;
+  border-bottom:8px solid var(--card);
+}
+
+/* ── cards ── */
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:18px;box-shadow:0 3px 0 var(--shadow);
+  display:flex;flex-direction:column;gap:11px;
+}
+.card.flat{box-shadow:none;margin-bottom:14px;gap:6px;}
+.card h2{font-family:var(--display);font-weight:700;font-size:23px;
+  line-height:1.22;margin:0;letter-spacing:-.01em;}
+.card p{margin:0;font-size:14.5px;color:var(--ink-2);}
+
+.pill{
+  align-self:flex-start;font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;font-weight:700;padding:5px 10px;border-radius:99px;
+  background:rgba(217,123,30,.16);color:var(--marigold);
+}
+.pill.wait{background:rgba(201,86,60,.14);color:var(--clay);}
+
+.go{
+  width:100%;border:none;cursor:pointer;font:inherit;font-size:16.5px;
+  font-weight:700;color:#fff;background:var(--marigold);
+  padding:16px;border-radius:14px;box-shadow:0 3px 0 rgba(0,0,0,.18);
+  min-height:52px;-webkit-tap-highlight-color:transparent;
+}
+.go:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.18);}
+.go.quiet-go{background:var(--card-2);color:var(--ink);box-shadow:none;
+  border:1px solid var(--line);font-size:15px;margin-top:8px;}
+.go:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+
+.link{
+  background:none;border:none;cursor:pointer;font:inherit;font-size:13.5px;
+  color:var(--muted);text-decoration:underline;padding:12px 8px;min-height:44px;
+}
+.link.centre{display:block;margin:2px auto 0;}
+
+.danger{
+  font:inherit;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;
+  background:none;color:var(--clay);border:1px solid var(--clay);
+  padding:11px 14px;border-radius:11px;min-height:44px;
+}
+
+.more{margin-top:2px;}
+.more summary{
+  cursor:pointer;font-size:13.5px;color:var(--muted);padding:8px 0;
+  list-style:none;
+}
+.more summary::-webkit-details-marker{display:none;}
+.more summary::before{content:'+ ';font-weight:700;}
+.more[open] summary::before{content:'– ';}
+.lab{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);font-weight:700;margin:8px 0 4px;}
+/* 16px is not a style choice — see the note at the top of this file. */
+.in{
+  width:100%;font-family:inherit;font-size:16px;color:var(--ink);
+  padding:10px 12px;border:1px solid var(--line);border-radius:10px;
+  background:#fff;resize:vertical;
+}
+.in:focus{outline:2px solid var(--marigold);outline-offset:-1px;}
+
+.tally{margin:20px 0 0;font-size:13.5px;color:var(--ink-2);}
+.tally b{font-family:var(--display);font-size:26px;color:var(--jade);
+  font-weight:700;margin-right:5px;}
+
+/* ── el camino ── */
+.phase{
+  display:flex;align-items:baseline;gap:8px;margin:22px 0 6px;
+  padding-bottom:6px;border-bottom:1px solid var(--line);
+}
+.phase b{font-family:var(--display);font-size:16.5px;font-weight:700;}
+.phase span{margin-left:auto;font-size:11.5px;color:var(--muted);font-weight:700;}
+ol.road{list-style:none;margin:0;padding:0;}
+ol.road li{display:flex;gap:11px;align-items:flex-start;padding:11px 2px;
+  border-bottom:1px solid rgba(59,42,29,.06);}
+ol.road li .n{font-size:11.5px;color:var(--muted);min-width:20px;padding-top:3px;
+  font-variant-numeric:tabular-nums;font-weight:700;}
+ol.road li .t{font-size:14.5px;flex:1;}
+ol.road li .t i{display:block;font-style:normal;font-size:11.5px;color:var(--muted);margin-top:2px;}
+ol.road li .tag{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  font-weight:700;padding:3px 7px;border-radius:4px;white-space:nowrap;margin-top:2px;
+  background:rgba(201,86,60,.13);color:var(--clay);}
+ol.road li[data-done="1"]{opacity:.45;}
+ol.road li[data-done="1"] .t{text-decoration:line-through;}
+ol.road li[data-done="1"] .n{color:var(--jade);}
+
+/* ── dinero ── */
+.line{display:flex;gap:10px;align-items:center;padding:9px 0;
+  border-bottom:1px solid rgba(59,42,29,.07);}
+.line .lb{flex:1;min-width:0;}
+.line .lb b{display:block;font-size:13.5px;font-weight:500;}
+.line .lb i{display:block;font-size:11.5px;color:var(--muted);font-style:normal;margin-top:1px;}
+.amt{
+  width:104px;flex:none;text-align:right;font-family:inherit;font-size:16px;
+  font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink);
+  padding:9px 10px;border:1px solid var(--line);border-radius:9px;
+  background:var(--card-2);min-height:44px;
+}
+.amt:focus{outline:2px solid var(--marigold);outline-offset:-1px;background:#fff;}
+.total{display:flex;justify-content:space-between;align-items:baseline;padding-top:13px;}
+.total span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);font-weight:700;}
+.total b{font-family:var(--display);font-size:25px;font-weight:700;
+  font-variant-numeric:tabular-nums;}
+.total b.jade{color:var(--jade);}
+
+.big-v{font-family:var(--display);font-size:34px;font-weight:700;margin:2px 0 2px;}
+
+/* ── bottom nav ── */
+nav{
+  flex:none;display:flex;background:var(--card);
+  border-top:1px solid var(--line);
+  padding:7px 4px calc(env(safe-area-inset-bottom) + 10px);
+}
+nav button{
+  flex:1;background:none;border:none;cursor:pointer;padding:7px 2px;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  font:inherit;font-size:11px;font-weight:700;color:var(--muted);
+  min-height:52px;-webkit-tap-highlight-color:transparent;
+}
+nav button svg{width:23px;height:23px;fill:none;stroke:currentColor;
+  stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+nav button[aria-selected="true"]{color:var(--marigold);}
+nav button:focus-visible{outline:2px solid var(--marigold);outline-offset:-3px;border-radius:10px;}
+
+/* ═══ OTTIS ANIMATION ═══
+   Explicit coordinates everywhere. A keyword origin resolves against the
+   whole SVG, not the element — that is what once sent his eyelids flying
+   to the top of the frame on every blink. */
+.o-all{transform-origin:130px 306px;}
+.o-head{transform-origin:130px 152px;}
+.o-tail{transform-origin:178px 268px;}
+.o-tongue{transform-origin:130px 138px;transform:scaleY(0);}
+.o-lid-l{transform-origin:108px 78px;transform:scaleY(0);}
+.o-lid-r{transform-origin:152px 78px;transform:scaleY(0);}
+.o-brow-l,.o-brow-r{transform-origin:130px 78px;}
+.o-ear-l{transform-origin:98px 58px;}
+.o-ear-r{transform-origin:162px 58px;}
+
+@keyframes breathe{0%,100%{transform:scaleY(1) translateY(0);}50%{transform:scaleY(1.018) translateY(-2px);}}
+@keyframes breathe-slow{0%,100%{transform:scaleY(1) translateY(0);}50%{transform:scaleY(1.03) translateY(-3px);}}
+@keyframes wag-slow{0%,100%{transform:rotate(-7deg);}50%{transform:rotate(9deg);}}
+@keyframes wag-fast{0%,100%{transform:rotate(-20deg);}50%{transform:rotate(24deg);}}
+@keyframes blink{0%,92%,100%{transform:scaleY(0);}95%,97%{transform:scaleY(1);}}
+@keyframes lick{
+  0%,100%{transform:scaleY(0) translateY(0);}
+  18%{transform:scaleY(1) translateY(0);}
+  34%{transform:scaleY(.72) translateY(-4px);}
+  52%{transform:scaleY(1.05) translateY(2px);}
+  70%{transform:scaleY(.8) translateY(-3px);}
+  86%{transform:scaleY(.95) translateY(1px);}
+}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(0deg);}30%{transform:translateY(-7px) rotate(-2deg);}65%{transform:translateY(-2px) rotate(2deg);}}
+@keyframes tilt{0%,100%{transform:rotate(0deg);}22%,78%{transform:rotate(-14deg);}}
+@keyframes lift{0%,100%{transform:translateY(0);}45%{transform:translateY(-9px);}}
+@keyframes browup{0%,100%{transform:translateY(0);}45%{transform:translateY(-4px);}}
+@keyframes earperk{0%,100%{transform:rotate(0deg);}40%{transform:rotate(-10deg);}}
+@keyframes earperkR{0%,100%{transform:rotate(0deg);}40%{transform:rotate(10deg);}}
+@keyframes droop{0%,100%{transform:rotate(0deg) translateY(0);}50%{transform:rotate(6deg) translateY(3px);}}
+
+[data-state="idle"] .o-body{animation:breathe 4.2s ease-in-out infinite;}
+[data-state="idle"] .o-tail{animation:wag-slow 3.4s ease-in-out infinite;}
+[data-state="idle"] .o-lid-l,[data-state="idle"] .o-lid-r{animation:blink 5.6s linear infinite;}
+
+[data-state="greet"] .o-all{animation:bob .62s ease-in-out infinite;}
+[data-state="greet"] .o-tail{animation:wag-fast .3s ease-in-out infinite;}
+[data-state="greet"] .o-tongue{animation:lick .62s ease-in-out infinite;}
+[data-state="greet"] .o-ear-l{animation:earperk .62s ease-in-out infinite;}
+[data-state="greet"] .o-ear-r{animation:earperkR .62s ease-in-out infinite;}
+[data-state="greet"] .o-lid-l,[data-state="greet"] .o-lid-r{animation:blink 4.4s linear infinite;}
+
+[data-state="tilt"] .o-head{animation:tilt 5s ease-in-out infinite;}
+[data-state="tilt"] .o-body{animation:breathe 4.2s ease-in-out infinite;}
+[data-state="tilt"] .o-tail{animation:wag-slow 4.4s ease-in-out infinite;}
+[data-state="tilt"] .o-lid-l,[data-state="tilt"] .o-lid-r{animation:blink 6.4s linear infinite;}
+
+[data-state="proud"] .o-all{animation:lift 1.1s ease-in-out infinite;}
+[data-state="proud"] .o-tail{animation:wag-fast .34s ease-in-out infinite;}
+[data-state="proud"] .o-brow-l,[data-state="proud"] .o-brow-r{animation:browup 1.1s ease-in-out infinite;}
+[data-state="proud"] .o-ear-l{animation:earperk 1.1s ease-in-out infinite;}
+[data-state="proud"] .o-ear-r{animation:earperkR 1.1s ease-in-out infinite;}
+
+[data-state="rest"] .o-body{animation:breathe-slow 6.4s ease-in-out infinite;}
+[data-state="rest"] .o-lid-l,[data-state="rest"] .o-lid-r{transform:scaleY(1);}
+[data-state="rest"] .o-ear-l,[data-state="rest"] .o-ear-r{animation:droop 6.4s ease-in-out infinite;}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important;}
+  .o-tongue{transform:scaleY(0);}
+}
