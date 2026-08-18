@@ -156,7 +156,7 @@ const sum = (list) => list.reduce((t, c) => t + S.costOf(c.id), 0);
 
 function screenSettings() {
   // Locally the placeholders are still in version.json — the deploy stamps
-  // them. Never show her a raw __VERSION__.
+  // them. Never show her a raw placeholder.
   const stamped = (s) => (s && !s.includes('__')) ? s : '';
   const v = stamped(BUILD.version) || 'Development build';
   const built = stamped(BUILD.built);

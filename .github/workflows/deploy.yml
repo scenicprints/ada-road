@@ -60,7 +60,12 @@ jobs:
           sed -i "s/__VERSION__/${V}/g" docs/sw.js
           sed -i "s/?v=DEV/?v=${V}/g" docs/index.html
           echo "--- version.json"; cat docs/version.json
-          if grep -rn "__VERSION__" docs/; then echo "::error::a placeholder survived"; exit 1; fi
+          # Check only the files that actually get stamped. Scanning all of
+          # docs/ also matches the placeholder's name where it is merely
+          # mentioned in a code comment, which fails the build for no reason.
+          if grep -n "__VERSION__\|__BUILT__\|__COMMIT__" docs/version.json docs/sw.js; then
+            echo "::error::a placeholder survived"; exit 1
+          fi
           if grep -n "?v=DEV" docs/index.html; then echo "::error::an unstamped asset URL survived"; exit 1; fi
 
       # A file the service worker promises to cache but which doesn't exist
