@@ -32,6 +32,9 @@ const FILES = [
 ];
 
 self.addEventListener('install', (e) => {
+  // Take over straight away. Waiting meant the OLD worker kept serving its
+  // cache, and its cache held the previous version of every module.
+  self.skipWaiting();
   e.waitUntil((async () => {
     const c = await caches.open(SHELL);
     // One at a time, so a single 404 can't fail the whole install.
@@ -72,6 +75,29 @@ self.addEventListener('fetch', (e) => {
         return fresh;
       } catch (err) {
         return (await caches.match('./index.html')) || Response.error();
+      }
+    })());
+    return;
+  }
+
+  // Our own JavaScript: network first, always.
+  //
+  // index.html carries ?v= on the files it names, but an ES module import
+  // inside app.js ("import './data.js'") carries nothing. Those requests
+  // matched the cache exactly and were answered with the previous build —
+  // so a new app.js ran against an old data.js and the app showed 21 steps
+  // when it shipped 32. Cache-busting in the HTML cannot reach them; only
+  // going to the network can.
+  if (url.pathname.endsWith('.js')) {
+    e.respondWith((async () => {
+      try {
+        const fresh = await fetch(e.request);
+        if (fresh.ok) (await caches.open(SHELL)).put(e.request, fresh.clone());
+        return fresh;
+      } catch (err) {
+        return (await caches.match(e.request))
+            || (await caches.match(e.request, { ignoreSearch: true }))
+            || Response.error();
       }
     })());
     return;
