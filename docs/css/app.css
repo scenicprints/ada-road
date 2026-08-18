@@ -14,6 +14,14 @@
 @import url('fonts.css');
 
 :root{
+  /* Stops Android Chrome's auto-dark from force-inverting the page. Without
+     it every near-black flips to white — which turned Ottis's black coat
+     pale and made him look albino on a real phone, while looking perfectly
+     fine on every desktop screenshot. See the note in index.html; it is
+     declared in both places because the meta tag applies before this file
+     has loaded. */
+  color-scheme: only light;
+
   --ground:#F8E7CE;
   --card:#FFF6E7;
   --card-2:#F5E2C6;
