@@ -14,6 +14,7 @@ import { mountRoadmap } from './roadmap.js';
 import * as S from './store.js';
 import { startCloud, cloud, onCloudStatus } from './cloud.js';
 import { cloudConfigured } from './config.js';
+import { runWelcome, needsWelcome, isInstalled } from './onboard.js';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '')
@@ -188,6 +189,12 @@ function screenSettings() {
     </div>
     <div class="card flat"><h3>Sharing</h3><p class="hint">${esc(syncLine)}</p></div>
     <div class="card flat">
+      <h3>Show me around</h3>
+      <p class="hint">${isInstalled() ? 'The welcome again, from the beginning.'
+        : 'The welcome again — including how to keep this on your home screen.'}</p>
+      <button class="go quiet-go" data-act="tour">Show me around again</button>
+    </div>
+    <div class="card flat">
       <h3>Start over</h3>
       <p class="hint">Clears every tick, note and figure on this phone.</p>
       <button class="danger" data-act="reset">Erase everything</button>
@@ -261,6 +268,7 @@ $('#view').addEventListener('click', (ev) => {
   else if (act === 'unrest') { restingToday = false; setMood('idle'); render(); }
   else if (act === 'reset')  { confirmReset(); }
   else if (act === 'update') { checkForUpdate(true); }
+  else if (act === 'tour')   { runWelcome({ replay: true }); }
   else if (act === 'pzin')   { park && park.zoom(1.3); }
   else if (act === 'pzout')  { park && park.zoom(1 / 1.3); }
   else if (act === 'pwhole') { park && park.whole(); }
@@ -350,8 +358,16 @@ S.subscribe(() => { if (tab === 'camino' || tab === 'hoy') render(); });
 onCloudStatus(() => { if (tab === 'settings') render(); });
 
 render();
-setMood('greet', 2600);
-setTimeout(() => { if (tab === 'hoy') render(); }, 2650);
+
+if (needsWelcome()) {
+  // Ottis does the greeting inside the welcome, so hold his in-app greeting
+  // until she has closed it — otherwise he has already said hello to a
+  // screen she never saw.
+  runWelcome().then(() => { setMood('greet', 2600); render(); setTimeout(() => { if (tab === 'hoy') render(); }, 2650); });
+} else {
+  setMood('greet', 2600);
+  setTimeout(() => { if (tab === 'hoy') render(); }, 2650);
+}
 
 if (!storageWorks) {
   $('#banner').hidden = false;

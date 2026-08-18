@@ -23,6 +23,7 @@ const FILES = [
   './js/data.js',
   './js/ottis.js',
   './js/roadmap.js',
+  './js/onboard.js',
   './js/store.js',
   './js/cloud.js',
   './js/config.js',
