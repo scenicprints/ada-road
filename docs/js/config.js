@@ -7,17 +7,16 @@
 //  (This is exactly why a GitHub write token could not be used instead:
 //   that one IS a password, and a web page cannot keep one.)
 //
-//  Until this is filled in, the app runs perfectly well on one phone —
-//  it just doesn't share anything with the other one.
+//  Project: ada-road · Spark (free) · Firestore nam5, production mode
 // ═══════════════════════════════════════════════════════════════════════
 
 export const FIREBASE = {
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  storageBucket: '',
-  messagingSenderId: '',
-  appId: '',
+  apiKey: 'AIzaSyCuDByoMD4DfO4PI0oh0WgeSSNCdIHhuVg',
+  authDomain: 'ada-road.firebaseapp.com',
+  projectId: 'ada-road',
+  storageBucket: 'ada-road.firebasestorage.app',
+  messagingSenderId: '52043918041',
+  appId: '1:52043918041:web:4cb72cbbda79268b2c6cc8',
 };
 
 /** The single shared plan both phones read and write. */
