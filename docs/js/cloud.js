@@ -18,6 +18,7 @@ const SDK = 'https://www.gstatic.com/firebasejs/10.12.5/';
 
 export const cloud = {
   status: cloudConfigured() ? 'connecting' : 'off',
+  readOnly: false,
   lastSync: null,
   error: '',
 };
@@ -70,6 +71,7 @@ export async function startCloud() {
       (err) => mark('error', err.code || 'unavailable')
     );
 
+    cloud.readOnly = IS_DEV;
     connectCloud(push);
     push(state);
   } catch (e) {
@@ -79,9 +81,19 @@ export async function startCloud() {
 
 let pending = null, timer = null;
 
+/** A development machine must never write to the real plan.
+ *
+ *  Testing on localhost put a step called "Call Ripon back about the
+ *  interview" into Ada's actual road, on her actual phone, because
+ *  localhost is an authorised Firebase domain and nothing here checked.
+ *  Reads still work, so the app can be developed against real data — but
+ *  nothing typed on a laptop reaches their phones again. */
+const IS_DEV = ['localhost', '127.0.0.1', ''].includes(location.hostname);
+
 /** Debounced, because ticking three steps quickly shouldn't be three writes. */
 function push(snapshot) {
   if (!setDocFn) return;
+  if (IS_DEV) { console.info('[ada-road] dev machine — not writing to the shared plan'); return; }
   pending = { steps: snapshot.steps, costs: snapshot.costs,
               custom: snapshot.custom, answers: snapshot.answers };
   clearTimeout(timer);

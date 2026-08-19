@@ -235,7 +235,8 @@ function screenSettings() {
   const syncLine = !cloudConfigured()
     ? 'Not set up yet — this phone is keeping its own copy.'
     : cloud.status === 'on'
-      ? (cloud.lastSync ? 'Synced ' + cloud.lastSync.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'Connected')
+      ? (cloud.readOnly ? 'Reading only — this is a development machine'
+         : cloud.lastSync ? 'Synced ' + cloud.lastSync.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'Connected')
       : cloud.status === 'connecting' ? 'Connecting…'
       : 'Offline — changes are saved here and will sync later';
 
