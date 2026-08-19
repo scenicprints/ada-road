@@ -433,3 +433,116 @@ ol.road li[data-done="1"] .n{color:var(--jade);}
 .w-go:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.18);}
 .w-skip{background:none;border:none;cursor:pointer;font:inherit;font-size:13.5px;
   color:var(--muted);text-decoration:underline;padding:8px 12px;min-height:40px;}
+
+/* ═══ LINKS ON A STEP ═════════════════════════════════════════════════
+   She should never have to go and find EdJoin or a phone number. */
+.steplinks{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px;}
+.steplink{
+  display:inline-flex;align-items:center;gap:7px;text-decoration:none;
+  font-size:13.5px;font-weight:600;color:var(--marigold);
+  background:rgba(217,123,30,.10);border:1px solid rgba(217,123,30,.28);
+  padding:9px 13px;border-radius:11px;min-height:44px;
+  -webkit-tap-highlight-color:transparent;
+}
+.steplink.tel{color:var(--jade);background:rgba(47,139,113,.10);border-color:rgba(47,139,113,.30);}
+.steplink svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;
+  stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ═══ THE CELEBRATION ═════════════════════════════════════════════════ */
+canvas.confetti{position:fixed;inset:0;width:100%;height:100%;z-index:70;pointer-events:none;}
+.stage-done{
+  position:fixed;left:0;right:0;top:0;z-index:71;pointer-events:none;
+  display:flex;justify-content:center;
+  padding:calc(env(safe-area-inset-top) + 16px) 18px 0;
+  animation:sd-in .45s cubic-bezier(.2,1.4,.4,1) both;
+}
+.stage-done.going{animation:sd-out .4s ease both;}
+@keyframes sd-in{from{opacity:0;transform:translateY(-26px) scale(.94);}to{opacity:1;transform:none;}}
+@keyframes sd-out{to{opacity:0;transform:translateY(-18px);}}
+.sd-inner{
+  background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:16px 22px;text-align:center;max-width:340px;
+  box-shadow:0 10px 30px rgba(59,42,29,.28);
+}
+.sd-inner b{display:block;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--marigold);font-weight:700;margin-bottom:4px;}
+.sd-inner h2{font-family:var(--display);font-weight:700;font-size:24px;margin:0 0 6px;}
+.sd-inner p{margin:0;font-family:var(--display);font-size:16px;color:var(--ink-2);}
+
+/* Ottis dancing — a bounce with a twist, not just the proud hop. */
+@keyframes o-dance{
+  0%,100%{transform:translateY(0) rotate(0deg);}
+  20%{transform:translateY(-12px) rotate(-7deg);}
+  45%{transform:translateY(-2px) rotate(6deg);}
+  70%{transform:translateY(-13px) rotate(7deg);}
+  88%{transform:translateY(-3px) rotate(-5deg);}
+}
+@keyframes o-dance-head{0%,100%{transform:rotate(-8deg);}50%{transform:rotate(8deg);}}
+[data-state="dance"] .o-all{animation:o-dance .78s ease-in-out infinite;}
+[data-state="dance"] .o-head{animation:o-dance-head .39s ease-in-out infinite;}
+[data-state="dance"] .o-tail{animation:wag-fast .22s ease-in-out infinite;}
+[data-state="dance"] .o-tongue{animation:lick .78s ease-in-out infinite;}
+[data-state="dance"] .o-ear-l{animation:earperk .39s ease-in-out infinite;}
+[data-state="dance"] .o-ear-r{animation:earperkR .39s ease-in-out infinite;}
+[data-state="dance"] .o-brow-l,[data-state="dance"] .o-brow-r{animation:browup .39s ease-in-out infinite;}
+
+/* ═══ QUESTIONS ═══════════════════════════════════════════════════════ */
+details.qs{margin:6px 0 14px;background:var(--card);border:1px solid var(--line);
+  border-radius:16px;padding:4px 16px 6px;}
+details.qs summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;
+  gap:10px;padding:12px 0;min-height:44px;}
+details.qs summary::-webkit-details-marker{display:none;}
+details.qs summary b{font-family:var(--display);font-size:16.5px;font-weight:700;}
+details.qs summary::before{content:'+ ';font-weight:700;color:var(--muted);}
+details.qs[open] summary::before{content:'– ';}
+details.qs summary span{margin-left:auto;font-size:11.5px;color:var(--muted);font-weight:700;}
+.qgroup{margin:14px 0 4px;}
+.qgroup h4{font-family:var(--display);font-size:15px;margin:0 0 8px;
+  display:flex;align-items:center;gap:10px;}
+.qgroup h4 .steplink{min-height:34px;padding:5px 10px;font-size:12.5px;}
+.q{padding:10px 0;border-top:1px solid rgba(59,42,29,.07);}
+.q p{margin:0 0 6px;font-size:14px;color:var(--ink);}
+.q[data-ans="1"]{border-left:3px solid var(--jade);padding-left:10px;}
+
+/* ═══ HER OWN STEPS ═══════════════════════════════════════════════════ */
+.addstep{
+  width:100%;margin:8px 0 2px;background:none;cursor:pointer;font:inherit;
+  font-size:13.5px;font-weight:600;color:var(--muted);
+  border:1px dashed var(--line);border-radius:12px;padding:12px;min-height:46px;
+}
+.addstep:active{background:var(--card-2);}
+ol.road li .mine{display:flex;gap:2px;margin-top:1px;}
+ol.road li .mine button{
+  width:32px;height:32px;border:none;background:none;cursor:pointer;
+  color:var(--muted);font-size:15px;border-radius:8px;padding:0;
+  -webkit-tap-highlight-color:transparent;
+}
+ol.road li .mine button:active{background:var(--card-2);}
+ol.road li .n{color:var(--muted);}
+
+.editor{position:fixed;inset:0;z-index:60;background:rgba(59,42,29,.42);
+  display:flex;align-items:flex-end;justify-content:center;
+  animation:w-in .22s ease both;}
+.ed-card{
+  background:var(--ground);border-radius:22px 22px 0 0;width:100%;max-width:520px;
+  padding:20px 18px calc(env(safe-area-inset-bottom) + 18px);
+  display:flex;flex-direction:column;gap:4px;max-height:88vh;overflow-y:auto;
+}
+.ed-card h3{font-size:20px;margin:0 0 6px;}
+.ed-owner{display:flex;gap:16px;margin:4px 0 10px;flex-wrap:wrap;}
+.ed-owner label{display:flex;align-items:center;gap:8px;font-size:15px;min-height:44px;cursor:pointer;}
+.ed-owner input{width:20px;height:20px;accent-color:var(--marigold);}
+.ed-row{display:flex;align-items:center;gap:12px;margin-top:6px;}
+.ed-row .go{flex:1;}
+
+/* ═══ DINERO EXTRAS ═══════════════════════════════════════════════════ */
+.paid{
+  flex:none;font:inherit;font-size:11px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;cursor:pointer;padding:8px 10px;border-radius:9px;
+  border:1px solid var(--line);background:var(--card-2);color:var(--muted);
+  min-height:38px;-webkit-tap-highlight-color:transparent;
+}
+.paid[aria-pressed="true"]{background:rgba(47,139,113,.14);border-color:var(--jade);color:var(--jade);}
+.note-soft{margin:12px 0 0;font-size:13px;color:var(--ink-2);line-height:1.55;
+  background:var(--card-2);border-radius:12px;padding:12px 14px;}
+.note-soft b{font-weight:700;color:var(--ink);}

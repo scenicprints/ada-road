@@ -82,7 +82,8 @@ let pending = null, timer = null;
 /** Debounced, because ticking three steps quickly shouldn't be three writes. */
 function push(snapshot) {
   if (!setDocFn) return;
-  pending = { steps: snapshot.steps, costs: snapshot.costs };
+  pending = { steps: snapshot.steps, costs: snapshot.costs,
+              custom: snapshot.custom, answers: snapshot.answers };
   clearTimeout(timer);
   timer = setTimeout(async () => {
     try {

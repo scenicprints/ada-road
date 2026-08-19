@@ -8,20 +8,26 @@
 //  Settings  — behind the gear: version, updates, sync.
 // ═══════════════════════════════════════════════════════════════════════
 
-import { PHASES, COSTS, SAYS, APP_NAME } from './data.js';
+import { PHASES, COSTS, SAYS, APP_NAME, QUESTIONS, SUB_RATE, SUB_DAYS_PER_WEEK, SUB_WEEKS } from './data.js';
 import { ottisSVG, say } from './ottis.js';
 import { mountRoadmap } from './roadmap.js';
 import * as S from './store.js';
 import { startCloud, cloud, onCloudStatus } from './cloud.js';
 import { cloudConfigured } from './config.js';
 import { runWelcome, needsWelcome, isInstalled } from './onboard.js';
+import { celebrateStage } from './celebrate.js';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;')
   .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-const allSteps = () => PHASES.flatMap(p => p.steps);
+/** The built-in road plus anything she has added herself. */
+function phaseSteps(phaseId) {
+  const base = (PHASES.find(p => p.id === phaseId) || { steps: [] }).steps;
+  return [...base, ...S.customSteps().filter(c => c.phase === phaseId)];
+}
+const allSteps = () => PHASES.flatMap(p => phaseSteps(p.id));
 const nextStep = () => allSteps().find(s => !S.step(s.id).done && s.owner === 'you');
 const doneCount = () => allSteps().filter(s => S.step(s.id).done).length;
 const money = (n) => '$' + Number(n || 0).toLocaleString('en-US');
@@ -37,7 +43,8 @@ let park = null;              // the roadmap, while it is mounted
 function ottisBlock() {
   const nt = nextStep();
   let bucket, state;
-  if (mood === 'proud')      { bucket = 'proud';    state = 'proud'; }
+  if (mood === 'dance')      { bucket = 'proud';    state = 'dance'; }
+  else if (mood === 'proud') { bucket = 'proud';    state = 'proud'; }
   else if (!nt)              { bucket = 'finished'; state = 'proud'; }
   else if (restingToday)     { bucket = 'waiting';  state = 'tilt';  }
   else if (mood === 'greet') { bucket = 'greet';    state = 'greet'; }
@@ -77,6 +84,7 @@ function screenHoy() {
         <span class="pill">Your move</span>
         <h2>${esc(nt.title)}</h2>
         ${nt.detail ? `<p>${esc(nt.detail)}</p>` : ''}
+        ${linksFor(nt)}
         <button class="go" data-act="done" data-id="${nt.id}">I did it</button>
         <details class="more" ${st.note || st.date ? 'open' : ''}>
           <summary>Add a note or a date</summary>
@@ -95,13 +103,32 @@ function screenHoy() {
 
 /** El camino — the hard data page. Every step is tickable, in any order,
  *  because she does not do them in the order the list happens to be in. */
+function questionsBlock() {
+  const total = QUESTIONS.reduce((t, g) => t + g.items.length, 0);
+  const done = QUESTIONS.reduce((t, g) => t + g.items.filter(i => S.answer(i.id).trim()).length, 0);
+  return `<details class="qs">
+    <summary><b>Questions to ask</b><span>${done} of ${total} answered</span></summary>
+    <p class="sub">Every answer here removes a guess from the plan.</p>
+    ${QUESTIONS.map(g => `<div class="qgroup">
+      <h4>${esc(g.who)}${g.tel ? ` <a class="steplink tel" href="tel:${esc(g.tel)}">Call</a>` : ''}</h4>
+      ${g.items.map(i => `<div class="q" data-ans="${S.answer(i.id).trim() ? 1 : 0}">
+        <p>${esc(i.q)}</p>
+        <textarea class="in" rows="2" placeholder="What they told you"
+          data-act="answer" data-id="${i.id}">${esc(S.answer(i.id))}</textarea>
+      </div>`).join('')}
+    </div>`).join('')}
+  </details>`;
+}
+
 function screenCamino() {
   let n = 0;
   return `<h1>El camino</h1>
-    <p class="sub">Every step, in order. Tick anything, whenever you did it.</p>` +
+    <p class="sub">Every step, in order. Tick anything, whenever you did it.</p>
+    ${questionsBlock()}` +
     PHASES.map(p => {
-      const d = p.steps.filter(s => S.step(s.id).done).length;
-      const rows = p.steps.map(s => {
+      const steps = phaseSteps(p.id);
+      const d = steps.filter(s => S.step(s.id).done).length;
+      const rows = steps.map(s => {
         n++;
         const st = S.step(s.id);
         return `<li data-done="${st.done ? 1 : 0}">
@@ -110,13 +137,21 @@ function screenCamino() {
                   aria-label="${st.done ? 'Mark not done' : 'Mark done'}: ${esc(s.title)}">
             ${st.done ? '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.2 4.6 8.8 10 3.4"/></svg>' : ''}
           </button>
-          <span class="n">${String(n).padStart(2, '0')}</span>
-          <span class="t">${esc(s.title)}${st.date ? `<i>${esc(prettyDate(st.date))}</i>` : ''}</span>
+          <span class="n">${s.custom ? '&#9733;' : String(n).padStart(2, '0')}</span>
+          <span class="t">${esc(s.title)}${st.date ? `<i>${esc(prettyDate(st.date))}</i>` : ''}
+            ${s.custom && s.detail ? `<i>${esc(s.detail)}</i>` : ''}</span>
           ${s.owner === 'them' && !st.done ? '<span class="tag">Waiting</span>' : ''}
+          ${s.custom ? `<span class="mine">
+            <button data-act="cup" data-id="${s.id}" aria-label="Move up">&#8593;</button>
+            <button data-act="cdown" data-id="${s.id}" aria-label="Move down">&#8595;</button>
+            <button data-act="cedit" data-id="${s.id}" aria-label="Edit">&#9998;</button>
+            <button data-act="cdel" data-id="${s.id}" aria-label="Delete">&#215;</button>
+          </span>` : ''}
         </li>`;
       }).join('');
-      return `<div class="phase"><b>${esc(p.title)}</b><span>${d}/${p.steps.length}</span></div>
-              <ol class="road">${rows}</ol>`;
+      return `<div class="phase"><b>${esc(p.title)}</b><span>${d}/${steps.length}</span></div>
+              <ol class="road">${rows}</ol>
+              <button class="addstep" data-act="cadd" data-phase="${p.id}">+ Add your own step here</button>`;
     }).join('');
 }
 
@@ -140,10 +175,13 @@ function screenParque() {
     </div>`;
 }
 
-function moneyRows(list) {
+function moneyRows(list, side) {
   return list.map(c => `
     <div class="line">
       <span class="lb"><b>${esc(c.label)}</b>${c.note ? `<i>${esc(c.note)}</i>` : ''}</span>
+      ${side === 'out' ? `<button class="paid" data-act="paid" data-id="${c.id}"
+          aria-pressed="${S.paidState(c.id) ? 'true' : 'false'}"
+          aria-label="Mark paid: ${esc(c.label)}">${S.paidState(c.id) ? 'Paid' : 'Pay'}</button>` : ''}
       <input class="amt" type="number" inputmode="numeric" min="0" step="1"
              value="${S.costOf(c.id)}" data-act="amt" data-id="${c.id}" aria-label="${esc(c.label)}"/>
     </div>`).join('');
@@ -155,15 +193,37 @@ function screenDinero() {
     <p class="sub">Tap any figure to correct it as you confirm it.</p>
     <div class="card flat">
       <h3>What it costs</h3>
-      ${moneyRows(COSTS.out)}
+      ${moneyRows(COSTS.out, 'out')}
       <div class="total"><span>Total out</span><b id="tOut">${money(sum(COSTS.out))}</b></div>
     </div>
     <div class="card flat">
       <h3>What can come back</h3>
       <p class="hint">Grants are ceilings, not promises.</p>
-      ${moneyRows(COSTS.in)}
+      ${moneyRows(COSTS.in, 'in')}
       <div class="total"><span>Total in</span><b id="tIn" class="jade">${money(sum(COSTS.in))}</b></div>
-    </div>`;
+    </div>
+    ${netBlock()}`;
+}
+
+/** Dropping this was the mistake, not a simplification. She needs to know
+ *  where she actually stands, not two totals she has to subtract herself. */
+function netBlock() {
+  const out = sum(COSTS.out), inn = sum(COSTS.in);
+  const ahead = inn >= out;
+  const paid = COSTS.out.filter(c => S.paidState(c.id)).reduce((t, c) => t + S.costOf(c.id), 0);
+  const season = SUB_RATE * SUB_DAYS_PER_WEEK * SUB_WEEKS;
+  return `<div class="card flat">
+    <h3>Where you stand</h3>
+    <div class="total" style="padding-top:6px">
+      <span>${ahead ? 'Ahead by' : 'Out of pocket'}</span>
+      <b id="tNet" class="${ahead ? 'jade' : ''}">${money(Math.abs(inn - out))}</b>
+    </div>
+    <p class="hint" id="tPaid">${money(paid)} of that is already paid.</p>
+    <p class="note-soft">This leaves out the biggest number of all: a residency year
+      with no teaching salary. Substitute work at about ${money(SUB_RATE)} a day is what
+      bridges it &mdash; roughly <b>${money(season)}</b> over a school year at
+      ${SUB_DAYS_PER_WEEK} days a week.</p>
+  </div>`;
 }
 
 function screenSettings() {
@@ -201,6 +261,21 @@ function screenSettings() {
     </div>`;
 }
 
+/** Her step mentions a place; give her the door rather than the name. */
+function linksFor(st) {
+  const bits = [];
+  if (st.link) bits.push(
+    '<a class="steplink" href="' + esc(st.link) + '" target="_blank" rel="noopener">' +
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.2 1.2"/>' +
+    '<path d="M13.5 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 1 0 5.7 5.7l1.2-1.2"/></svg>' +
+    esc(st.linkLabel || 'Open') + '</a>');
+  if (st.tel) bits.push(
+    '<a class="steplink tel" href="tel:' + esc(st.tel) + '">' +
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.5 5.7 2 2 0 0 1 6.5 3.5z"/></svg>' +
+    esc(st.telLabel || 'Call') + '</a>');
+  return bits.length ? '<div class="steplinks">' + bits.join('') + '</div>' : '';
+}
+
 function prettyDate(iso) {
   const [y, m, d] = String(iso).split('-').map(Number);
   if (!y || !m || !d) return '';
@@ -226,7 +301,7 @@ function render() {
 
 function mountPark() {
   const host = $('#parkwrap');
-  const steps = PHASES.flatMap(p => p.steps.map(s => ({ ...s, stageName: p.title })));
+  const steps = PHASES.flatMap(p => phaseSteps(p.id).map(s => ({ ...s, stageName: p.title })));
   const firstOpen = steps.findIndex(s => !S.step(s.id).done);
   const hud = $('#phud'), pcard = $('#pcard');
 
@@ -256,14 +331,28 @@ $('#view').addEventListener('click', (ev) => {
   const act = b.dataset.act;
 
   if (act === 'done') {
+    const before = stageOf(b.dataset.id);
     S.setStep(b.dataset.id, { done: true });
     restingToday = false; setMood('proud', 3000); render();
+    maybeCelebrate(before);
   } else if (act === 'toggle') {
     // Any step, any order — she does not do them in list order.
     const id = b.dataset.id;
+    const before = stageOf(id);
     S.setStep(id, { done: !S.step(id).done });
     render();
+    maybeCelebrate(before);
   }
+  else if (act === 'paid')  { S.setPaid(b.dataset.id, !S.paidState(b.dataset.id)); render(); }
+  else if (act === 'cadd')  { openStepEditor(null, b.dataset.phase); }
+  else if (act === 'cedit') { openStepEditor(b.dataset.id); }
+  else if (act === 'cdel')  {
+    if (window.confirm('Delete this step? It disappears from both phones.')) { S.removeCustom(b.dataset.id); render(); }
+  }
+  else if (act === 'cup')   { S.moveCustom(b.dataset.id, -1); render(); }
+  else if (act === 'cdown') { S.moveCustom(b.dataset.id, 1); render(); }
+  else if (act === 'esave') { saveStepEditor(); }
+  else if (act === 'ecancel') { closeStepEditor(); }
   else if (act === 'rest')   { restingToday = true;  setMood('idle'); render(); }
   else if (act === 'unrest') { restingToday = false; setMood('idle'); render(); }
   else if (act === 'reset')  { confirmReset(); }
@@ -281,19 +370,109 @@ $('#view').addEventListener('input', (ev) => {
   const el = ev.target.closest('[data-act]');
   if (!el) return;
   const { act, id } = el.dataset;
-  if (act === 'note')      S.setStep(id, { note: el.value });
-  else if (act === 'date') S.setStep(id, { date: el.value });
+  if (act === 'note')        S.setStep(id, { note: el.value });
+  else if (act === 'answer') S.setAnswer(id, el.value);
+  else if (act === 'date')   S.setStep(id, { date: el.value });
   else if (act === 'amt') {
     S.setCost(id, el.value === '' ? 0 : Number(el.value));
-    const o = $('#tOut'), i = $('#tIn');
-    if (o) o.textContent = money(sum(COSTS.out));
-    if (i) i.textContent = money(sum(COSTS.in));
+    const o = $('#tOut'), i = $('#tIn'), n = $('#tNet'), pd = $('#tPaid');
+    const out = sum(COSTS.out), inn = sum(COSTS.in);
+    if (o) o.textContent = money(out);
+    if (i) i.textContent = money(inn);
+    if (n) {
+      n.textContent = money(Math.abs(inn - out));
+      n.classList.toggle('jade', inn >= out);
+      n.closest('.total').querySelector('span').textContent = inn >= out ? 'Ahead by' : 'Out of pocket';
+    }
+    if (pd) pd.textContent = money(COSTS.out.filter(c => S.paidState(c.id)).reduce((t, c) => t + S.costOf(c.id), 0)) + ' of that is already paid.';
   }
+});
+
+/** Which stage a step belongs to, and whether that stage was finished. */
+function stageOf(id) {
+  for (const p of PHASES) {
+    const steps = phaseSteps(p.id);
+    if (steps.some(s => s.id === id)) {
+      return { phase: p, wasComplete: steps.every(s => S.step(s.id).done) };
+    }
+  }
+  return null;
+}
+
+/** Fires once, when a whole stage closes — never for a single step, or it
+ *  stops meaning anything. */
+function maybeCelebrate(before) {
+  if (!before || before.wasComplete) return;
+  const steps = phaseSteps(before.phase.id);
+  if (!steps.length || !steps.every(s => S.step(s.id).done)) return;
+  setMood('dance', 5200);
+  render();
+  celebrateStage(before.phase.title, say('proud', SAYS)).then(() => {
+    setMood('idle'); render();
+  });
+}
+
+/* ── her own steps ─────────────────────────────────────────────────── */
+let editing = null;
+
+function openStepEditor(id, phase) {
+  const c = id ? S.customSteps().find(x => x.id === id) : null;
+  editing = { id, phase: c ? c.phase : phase };
+  const el = document.createElement('div');
+  el.className = 'editor';
+  el.id = 'editor';
+  el.innerHTML = `<div class="ed-card">
+      <h3>${id ? 'Edit your step' : 'Add a step'}</h3>
+      <label class="lab" for="ed-t">What is it?</label>
+      <input class="in" id="ed-t" type="text" maxlength="90"
+        placeholder="Call the district back" value="${esc(c ? c.title : '')}"/>
+      <label class="lab" for="ed-d">Any detail (optional)</label>
+      <textarea class="in" id="ed-d" rows="2"
+        placeholder="Who, what, anything you want to remember">${esc(c ? (c.detail || '') : '')}</textarea>
+      <label class="lab">Whose move is it?</label>
+      <div class="ed-owner">
+        <label><input type="radio" name="edo" value="you" ${!c || c.owner === 'you' ? 'checked' : ''}/> Mine</label>
+        <label><input type="radio" name="edo" value="them" ${c && c.owner === 'them' ? 'checked' : ''}/> Waiting on someone</label>
+      </div>
+      <div class="ed-row">
+        <button class="link" data-act="ecancel">Cancel</button>
+        <button class="go" data-act="esave">${id ? 'Save' : 'Add it'}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  // The editor lives outside #view, so the app's delegated click handler
+  // never sees it — Save silently did nothing. It wires its own buttons.
+  el.addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-act]');
+    if (!b) return;
+    if (b.dataset.act === 'esave') saveStepEditor();
+    else if (b.dataset.act === 'ecancel') closeStepEditor();
+  });
+  setTimeout(() => { const t = document.getElementById('ed-t'); if (t) t.focus(); }, 40);
+}
+function closeStepEditor() {
+  const el = document.getElementById('editor');
+  if (el) el.remove();
+  editing = null;
+}
+function saveStepEditor() {
+  const title = (document.getElementById('ed-t').value || '').trim();
+  if (!title) { document.getElementById('ed-t').focus(); return; }
+  const detail = (document.getElementById('ed-d').value || '').trim();
+  const owner = (document.querySelector('input[name="edo"]:checked') || { value: 'you' }).value;
+  if (editing.id) S.editCustom(editing.id, { title, detail, owner });
+  else S.addCustom({ title, detail, owner, phase: editing.phase });
+  closeStepEditor();
+  render();
+}
+document.addEventListener('click', (ev) => {
+  const el = document.getElementById('editor');
+  if (el && ev.target === el) closeStepEditor();
 });
 
 function confirmReset() {
   if (!window.confirm('Erase every tick, note and figure on this phone?')) return;
-  S.state.steps = {}; S.state.costs = {};
+  S.state.steps = {}; S.state.costs = {}; S.state.custom = {}; S.state.answers = {};
   S.saveNow(); restingToday = false; render();
 }
 

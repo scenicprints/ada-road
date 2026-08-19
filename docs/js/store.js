@@ -24,7 +24,9 @@ const SCHEMA = 1;
 export const state = {
   schema: SCHEMA,
   steps: {},   // id -> { done, note, date, at }
-  costs: {},   // id -> { amt, at }
+  costs: {},   // id -> { amt, at, paid }
+  custom: {},  // id -> { title, detail, owner, phase, order, at, deleted }
+  answers: {}, // question id -> { text, at }
   seen: {},    // small ui flags
 };
 
@@ -51,7 +53,57 @@ export function setStep(id, patch) {
 }
 
 export function setCost(id, amt) {
-  state.costs[id] = { amt, at: Date.now() };
+  state.costs[id] = { ...(state.costs[id] || {}), amt, at: Date.now() };
+  persist();
+}
+
+export function paidState(id) { return !!(state.costs[id] && state.costs[id].paid); }
+export function setPaid(id, paid) {
+  state.costs[id] = { ...(state.costs[id] || {}), paid, at: Date.now() };
+  persist();
+}
+
+/* ── her own steps ──────────────────────────────────────────────────
+   Kept in the same shared document, so they appear on both phones. A
+   deleted one is tombstoned rather than removed, or the other phone
+   would simply put it back on its next write. */
+export function customSteps() {
+  return Object.entries(state.custom)
+    .filter(([, c]) => c && !c.deleted)
+    .map(([id, c]) => ({ ...c, id, custom: true }))
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+}
+export function addCustom({ title, detail, owner, phase }) {
+  const id = 'c' + Date.now().toString(36);
+  const mine = customSteps().filter(c => c.phase === phase);
+  state.custom[id] = { title, detail, owner, phase, order: mine.length, at: Date.now() };
+  persist();
+  return id;
+}
+export function editCustom(id, patch) {
+  if (!state.custom[id]) return;
+  state.custom[id] = { ...state.custom[id], ...patch, at: Date.now() };
+  persist();
+}
+export function removeCustom(id) {
+  if (!state.custom[id]) return;
+  state.custom[id] = { ...state.custom[id], deleted: true, at: Date.now() };
+  persist();
+}
+export function moveCustom(id, dir) {
+  const c = state.custom[id]; if (!c) return;
+  const sibs = customSteps().filter(x => x.phase === c.phase);
+  const i = sibs.findIndex(x => x.id === id), j = i + dir;
+  if (i < 0 || j < 0 || j >= sibs.length) return;
+  const a = sibs[i], b = sibs[j];
+  state.custom[a.id] = { ...state.custom[a.id], order: j, at: Date.now() };
+  state.custom[b.id] = { ...state.custom[b.id], order: i, at: Date.now() };
+  persist();
+}
+
+export function answer(id) { return (state.answers[id] && state.answers[id].text) || ''; }
+export function setAnswer(id, text) {
+  state.answers[id] = { text, at: Date.now() };
   persist();
 }
 
@@ -64,9 +116,11 @@ export function load() {
   if (!raw) return true;
   try {
     const saved = JSON.parse(raw);
-    state.steps = saved.steps || {};
-    state.costs = saved.costs || {};
-    state.seen  = saved.seen  || {};
+    state.steps   = saved.steps   || {};
+    state.costs   = saved.costs   || {};
+    state.custom  = saved.custom  || {};
+    state.answers = saved.answers || {};
+    state.seen    = saved.seen    || {};
   } catch (e) {
     // Keep the damaged copy rather than destroying it silently.
     try { localStorage.setItem(KEY + '-broken-' + Date.now(), raw); } catch (e2) {}
@@ -108,7 +162,7 @@ export function connectCloud(push) { pushUp = push; }
 export function mergeRemote(remote) {
   if (!remote) return false;
   let changed = false;
-  for (const bag of ['steps', 'costs']) {
+  for (const bag of ['steps', 'costs', 'custom', 'answers']) {
     const incoming = remote[bag] || {};
     for (const id of Object.keys(incoming)) {
       const mine = state[bag][id];
